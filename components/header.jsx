@@ -1,10 +1,14 @@
+import { checkUser } from "@/lib/checkUser";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { PenBox } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import UserMenu from "./user-menu";
 
-const Header = () => {
+const Header = async () => {
+
+  await checkUser();
+
   return (
     <div>
       <header className="container mx-auto ">
