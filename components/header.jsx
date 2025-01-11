@@ -3,6 +3,7 @@ import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { PenBox } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
+import UserLoading from "./user-loading";
 import UserMenu from "./user-menu";
 
 const Header = async () => {
@@ -43,6 +44,7 @@ const Header = async () => {
             </SignedIn>
           </div>
         </nav>
+        <UserLoading />
       </header>
     </div>
   );
