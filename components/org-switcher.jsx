@@ -13,7 +13,7 @@ const OrgSwitcher = () => {
         return null;
     }
 
-  return (
+return (
     <div>
         <SignedIn>
             <OrganizationSwitcher
@@ -21,19 +21,19 @@ const OrgSwitcher = () => {
                 afterCreateOrganizationUrl="/organization/:slug"
                 afterSelectOrganizationUrl="/organization/:slug"
                 createOrganizationMode={
-                    pathname === "/onboarding"?"navigation":"modal"
+                    pathname === "/onboarding" ? "navigation" : "modal"
                 }
                 createOrganizationUrl="/onboarding"
                 appearance={{
-                    elements:{
-                        organizationSwitcherTrigger: "border border-gray-300 rounded-md px-5 py-2",
-                        organizationSwitcherTriggerIcon: "text-white",
+                    elements: {
+                        organizationSwitcherTrigger: "border border-yellow-300 rounded-md px-5 py-2",
+                        organizationSwitcherTriggerIcon: "text-yellow-400",
                     }
                 }}
             />
         </SignedIn>
     </div>
-  )
+)
 }
 
 export default OrgSwitcher
