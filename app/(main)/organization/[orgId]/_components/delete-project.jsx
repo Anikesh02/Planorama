@@ -1,13 +1,13 @@
 "use client"
 
-import { useOrganization } from '@clerk/nextjs'
-import React, { useEffect } from 'react'
-import { Button } from './ui/button';
-import { Trash2 } from 'lucide-react';
-import useFetch from '@/hooks/use-fetch';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { deleteProjects } from '@/actions/projects';
+import useFetch from '@/hooks/use-fetch';
+import { useOrganization } from '@clerk/nextjs';
+import { Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../../../../../components/ui/button';
 
 const DeleteProject = ({projectId}) => {
   const {membership} = useOrganization();

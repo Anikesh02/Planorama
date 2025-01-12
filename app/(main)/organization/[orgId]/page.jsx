@@ -1,6 +1,6 @@
 import { getOrganization } from "@/actions/organization";
+import ProjectList from "@/app/(main)/organization/[orgId]/_components/project-list";
 import OrgSwitcher from "@/components/org-switcher";
-import ProjectList from "@/components/project-list";
 
 const Organization = async ({params}) => {
     const {orgId} = params;
