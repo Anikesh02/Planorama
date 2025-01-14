@@ -1,16 +1,25 @@
 "use client"
 
+import { getIssuesForSprint, updateIssueOrder } from "@/actions/issues";
+import IssueCard from "@/components/issue-card";
 import { Button } from "@/components/ui/button";
 import statuses from "@/data/status";
+import useFetch from "@/hooks/use-fetch";
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { Plus } from "lucide-react";
 import { useEffect, useState } from 'react';
-import SprintManager from './sprint-manager';
-import IssueCreationDrawer from "./create-issue";
-import useFetch from "@/hooks/use-fetch";
-import { getIssuesForSprint } from "@/actions/issues";
 import { BarLoader } from "react-spinners";
-import IssueCard from "@/components/issue-card";
+import { toast } from "sonner";
+import BoardFilters from "./board-filters";
+import IssueCreationDrawer from "./create-issue";
+import SprintManager from './sprint-manager';
+
+const reorder = (list, startIndex, endIndex) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    return result;
+}
 
 const SprintBoard = ({sprints, projectId, orgId}) => {
     const [currentSprint, setCurrentSprint] = useState(
@@ -42,12 +51,63 @@ const SprintBoard = ({sprints, projectId, orgId}) => {
 
       const [filteredIssues, setFilteredIssues] = useState(issues);
 
+      const handleFilterChange = (newFilteredIssues) => {
+        setFilteredIssues(newFilteredIssues);
+      }
+
       const handleIssueCreated = () => {
         fetchIssues(currentSprint.id);
       }
-      if(issuesError) return <div>Error loading issues</div>
 
-      const onDragEnd = () => {}
+      const {
+        fn: updateIssueOrderFn,
+        loading: updateIssuesLoading,
+        error: updateIssuesError,
+      } = useFetch(updateIssueOrder);
+
+      const onDragEnd = async (result) => {
+        if(currentSprint.status === "PLANNED"){
+            toast.warning("Start the sprint to update board");
+            return;
+        }
+        if(currentSprint.status === "COMPLETED"){
+            toast.warning("Cannot update board after sprint end");
+            return;
+        }
+        const {destination, source} = result;
+        if(!destination){
+            return;
+        }
+        if(destination.droppableId===source.droppableId && destination.index === source.index){
+            return;
+        }
+        const newOrderedData = [...issues];
+
+        const sourceList = newOrderedData.filter((list)=>list.status === source.droppableId);
+        const destinationList = newOrderedData.filter((list)=>list.status === destination.droppableId);
+        if(destination.droppableId===source.droppableId ){
+            const reorderedCards = reorder(sourceList, source.index, destination.index);
+            reorderedCards.forEach((card, i)=>{
+                card.order = i
+            })
+        } else{
+            const [movedCard] = sourceList.splice(source.index, 1);
+            movedCard.status = destination.droppableId;
+            destinationList.splice(destination.index, 0, movedCard);
+            sourceList.forEach((card, i)=>{
+                card.order = i;
+            })
+            destinationList.forEach((card, i)=>{
+                card.order = i;
+            })
+        }
+
+        const sortedIssues = newOrderedData.sort((a,b)=> a.order - b.order);
+        setIssues(sortedIssues, newOrderedData);
+        updateIssueOrderFn(sortedIssues);
+      }
+
+      if(issuesError) return <div>Error loading issues</div>
 
   return (
     <div>
@@ -58,9 +118,15 @@ const SprintBoard = ({sprints, projectId, orgId}) => {
         sprints={sprints}
         projectId={projectId}
         />
+        {issues && !issuesLoading && (
+            <BoardFilters issues={issues} onFilterChange={handleFilterChange} />
+        )}
 
-        {issuesLoading && (
+        {(issuesLoading || updateIssuesLoading) && (
             <BarLoader width={"100%"} className="mt-4" color='#36d7b7' />
+        )}
+        {updateIssuesError && (
+            <p className="text-red-500 mt-2">{updateIssuesError.message}</p>
         )}
 
         {/* Kanban Board  */}
@@ -73,16 +139,27 @@ const SprintBoard = ({sprints, projectId, orgId}) => {
                         <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
                             <h3 className="font-semibold mb-1 text-center">{column.name}</h3>
                             {/* Issues  */}
-                            {issues?.filter((issue)=>issue.status === column.key).map((issue, index)=>(
-                                <Draggable key={issue.id} draggableId={issue.id} index={index}>
+                            {filteredIssues?.filter((issue)=>issue.status === column.key).map((issue, index)=>(
+                                <Draggable key={issue.id} draggableId={issue.id} index={index} isDragDisabled={updateIssuesLoading}>
                                 {(provided)=>{
                                     return ( <div
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                         >
-                                            <IssueCard issue={issue} />
-                                        </div>
+                                        <IssueCard
+                                        issue={issue}
+                                        onDelete={() => fetchIssues(currentSprint.id)}
+                                        onUpdate={(updated) =>
+                                            setIssues((issues) =>
+                                                issues.map((issue) => {
+                                                    if (issue.id === updated.id) return updated;
+                                                    return issue;
+                                                })
+                                            )
+                                        }
+                                        />
+                                    </div>
                                     )
                                 }}
                                 </Draggable>

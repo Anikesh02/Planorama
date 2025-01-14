@@ -1,8 +1,11 @@
-import React from 'react'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import UserAvatar from './user-avatar';
+"use client"
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import IssueDetailsDialog from './issue-details-dialog';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import UserAvatar from './user-avatar';
 
 const priorityColor = {
   LOW: "border-green-600",
@@ -18,12 +21,25 @@ const IssueCard = ({
   onUpdate = () => {},
 }) => {
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
+
+  const onDeleteHandler = (...params) => {
+    router.refresh();
+    onDelete(...params);
+  }
+
+  const onUpdateHandler = (...params) => {
+    router.refresh();
+    onUpdate(...params);
+  }
+
   const created = formatDistanceToNow(new Date(issue.createdAt), {addSuffix : true,});
 
   return (
     <>
-    <Card className="cursor-pointer hover:shadow-md transition-shadow">
-    <CardHeader>
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={()=>setIsDialogOpen(true)}>
+    <CardHeader className={`border-t-2 ${priorityColor[issue.priority]} rounded-lg`}>
       <CardTitle>{issue.title}</CardTitle>
     </CardHeader>
     <CardContent className="flex gap-2 -mt-3">
@@ -36,7 +52,15 @@ const IssueCard = ({
       <UserAvatar user={issue.assignee} />
       <div className='text-xs text-gray-400 w-full'>Created {created}</div>
     </CardFooter>
-</Card>
+    </Card>
+    {isDialogOpen && <IssueDetailsDialog
+    isOpen={isDialogOpen}
+    onClose={()=>setIsDialogOpen(false)}
+    issue={issue}
+    onDelete={onDeleteHandler}
+    onUpdate={onUpdateHandler}
+    borderCol={priorityColor[issue.priority]}
+    />}
     </>
   )
 }
