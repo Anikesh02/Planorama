@@ -1,4 +1,4 @@
-import CompanyCarousel from "@/components/CompanyCarousel";
+import CompanyCarousel from "@/components/company-carousel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
