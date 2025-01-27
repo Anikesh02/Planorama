@@ -1,22 +1,22 @@
 "use client"
 
 import { createSprint } from "@/actions/sprints";
+import { sprintSchema } from "@/app/lib/validators";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent } from "@/components/ui/popover";
+import useFetch from "@/hooks/use-fetch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PopoverTrigger } from "@radix-ui/react-popover";
 import { addDays, format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DayPicker } from "react-day-picker";
-import { Controller, useForm } from "react-hook-form";
-import { Button } from "../../../../components/ui/button";
 import 'react-day-picker/dist/style.css';
-import useFetch from "@/hooks/use-fetch";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { sprintSchema } from "@/app/lib/validators";
+import { Button } from "../../../../components/ui/button";
 
 const SprintCreationForm = ({projectTitle, projectId, projectKey, sprintKey,}) => {
 
@@ -37,12 +37,20 @@ const SprintCreationForm = ({projectTitle, projectId, projectKey, sprintKey,}) =
 
     const { loading: createSprintLoading, fn: createSprintFn } = useFetch(createSprint);
     const onSubmit = async (data) => {
-      await createSprintFn(projectId, {
-        ...data, startDate: dateRange.from, endDate: dateRange.to,
-      });
-      setShowForm(false);
-      toast.success("Sprint Created Successfully");
-      router.refresh();
+      try {
+        await createSprintFn(projectId, {
+          ...data, startDate: dateRange.from, endDate: dateRange.to,
+        });
+        setShowForm(false);
+        toast.success("Sprint Created Successfully");
+        router.refresh();
+      } catch (error) {
+        if (error.code === 'P2002' && error.meta.target.includes('name')) {
+          toast.error("A sprint with this name already exists. Please choose a different name.");
+        } else {
+          toast.error("An error occurred while creating the sprint. Please try again.");
+        }
+      }
     }
 
 
